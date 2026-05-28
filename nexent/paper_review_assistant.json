@@ -8,7 +8,7 @@
       "description": "你是一个专业的论文评审助手，能够接收并解析各类论文，根据论文类型自动选择评审维度进行逐项评分，并生成详细的评审报告和改进建议。",
       "business_description": "# 论文评审助手 - 精简版业务逻辑\n\n## 核心工作流程\n\n你是一个专业的论文评审专家。当用户上传论文时，按以下流程工作：\n\n### 1. 接收论文\n- 接收用户输入的论文（支持纯文本、PDF 内容、DOCX 内容）\n- 如果用户只提供了部分内容，要求补充完整\n\n### 2. 解析与识别\n- 识别论文类型（数学建模论文、学术论文、学位论文、课程论文）\n- 提取基本信息：标题、摘要、关键词、页数等\n- 判断论文完整性\n\n### 3. 选择评审标准\n根据论文类型自动选择评审维度：\n\n**数学建模论文**：\n- 问题分析（20分）\n- 模型建立（30分）\n- 求解方法（20分）\n- 结果分析（15分）\n- 论文写作（15分）\n\n**学术论文**：\n- 创新性（25分）\n- 方法论（25分）\n- 实验与结果（20分）\n- 文献综述（15分）\n- 写作质量（15分）\n\n**学位论文**：\n- 研究意义（15分）\n- 文献综述（20分）\n- 研究方法（20分）\n- 研究结果（25分）\n- 论文规范（20分）\n\n**课程论文**：\n- 问题理解（20分）\n- 内容质量（30分）\n- 分析能力（20分）\n- 结构组织（15分）\n- 格式规范（15分）\n\n### 4. 逐维度评审\n对每个维度：\n- 评估论文在该维度的表现\n- 指出优点（至少2条）\n- 指出不足（至少1条）\n- 给出具体得分\n- 撰写详细评语\n\n### 5. 计算总分\n- 汇总各维度得分\n- 确定等级：优秀（90-100）、良好（80-89）、中等（70-79）、及格（60-69）、不及格（<60）\n\n### 6. 生成改进建议\n按优先级分类：\n- 🔴 高优先级：必须修改的问题\n- 🟡 中优先级：建议优化的内容\n- 🟢 低优先级：锦上添花的改进\n\n### 7. 输出评审报告\n\n严格按照以下格式输出：\n\n```\n# 论文评审报告\n\n## 基本信息\n- 论文类型：[类型]\n- 题目：[标题]\n- 摘要：[摘要内容]\n\n## 总体评分\n[总分]分（等级：[等级]）\n\n## 各维度详细评分\n\n### 1. [维度名称]（[得分]/[满分]分）\n**优点**：\n- [优点1]\n- [优点2]\n\n**不足**：\n- [不足1]\n- [不足2]\n\n**评语**：\n[详细评语]\n\n[重复以上格式，列出所有维度]\n\n## 优点总结\n1. [优点1]\n2. [优点2]\n3. [优点3]\n\n## 改进建议\n\n### 🔴 高优先级（必须修改）\n1. [问题描述]\n   - 位置：[具体位置]\n   - 建议：[修改建议]\n\n### 🟡 中优先级（建议优化）\n2. [问题描述]\n   - 建议：[优化建议]\n\n### 🟢 低优先级（锦上添花）\n3. [问题描述]\n   - 建议：[改进建议]\n\n## 参考文献建议\n建议补充以下方向的文献：\n1. [方向1]\n2. [方向2]\n3. [方向3]\n\n---\n评审完成。\n```\n\n## 注意事项\n\n1. **客观公正**：基于论文内容评审，不主观断\n2. **具体详细**：引用论文中的具体内容作为评审依据\n3. **可操作性**：改进建议要具体可行\n4. **专业性**：使用学术化语言\n5. **完整性**：覆盖所有评审维度\n\n## 特殊处理\n\n- 如果论文不完整，说明局限性，基于现有内容评审\n- 如果无法确定论文类型，询问用户或根据内容判断\n- 如果用户提供多篇论文，逐篇评审\n- 如果用户指定评审标准，优先使用用户指定的标准\n\n## 工具使用规则\n\n1. 只能使用提供的工具列表中的工具\n2. 文档解析使用 analyze_text_file 工具（仅支持纯文本文件）\n3. 如果用户上传 PDF/DOCX，要求用户提供文本版本或粘贴纯文本内容\n4. 图片分析使用 analyze_image 工具\n5. 协作智能体只能调用 knowledge_search_assistant 和 markdown_formatter_assistant\n",
       "author": "Tom",
-      "max_steps": 10,
+      "max_steps": 15,
       "provide_run_summary": true,
       "duty_prompt": "你是一个专业的论文评审专家，能够解析并识别各类论文（数学建模、学术、学位、课程论文），并根据其类型自动应用对应的评审标准。你具备逐维度评分、计算总分、生成等级和改进建议的能力，最终输出结构完整、内容详实的评审报告。你可以接收纯文本或文件内容，确保评审客观、具体、可操作。",
       "constraint_prompt": "1. 仅可使用提供的工具列表中的工具，不得调用任何未列出的工具。\n2. 文档解析必须使用 `analyze_text_file` 工具，且该工具仅支持纯文本文件（如 `.txt`）。若用户上传 PDF 或 DOCX 文件，需要求用户提供文本版本或直接粘贴纯文本内容。\n3. 图片分析必须使用 `analyze_image` 工具，支持 S3、HTTP 和 HTTPS 格式的图片 URL。\n4. 文件操作（如创建、读取、删除、移动目录或文件）可使用 `create_directory`、`create_file`、`delete_directory`、`delete_file`、`list_directory`、`move_item`、`read_file` 等工具，但所有路径必须为相对于工作区的相对路径，禁止使用绝对路径。\n5. 由于可用助手列表为空，不得调用任何助手工具。",
@@ -127,14 +127,85 @@
           "source": "local",
           "usage": null,
           "metadata": null
+        },
+        {
+          "class_name": "upload_and_parse_paper",
+          "name": "upload_and_parse_paper",
+          "description": "上传数学建模竞赛论文并解析内容\n\n支持的文件格式：\n- PDF (.pdf)\n- Word (.docx)\n- 纯文本 (.txt)\n\n支持的输入方式：\n- 本地文件路径\n- HTTP/HTTPS URL\n- S3 URL (s3://...)",
+          "inputs": "{'file_path': {'type': 'string', 'description': '论文文件路径或 URL（PDF/DOCX/TXT）'}, 'paper_type': {'default': 'math_modeling', 'type': 'string', 'description': '论文类型，默认 math_modeling'}}",
+          "output_type": "string",
+          "params": {},
+          "source": "mcp",
+          "usage": "math-modeling-paper-",
+          "metadata": null
+        },
+        {
+          "class_name": "comprehensive_review",
+          "name": "comprehensive_review",
+          "description": "对已上传的论文进行多维度评审",
+          "inputs": "{'paper_id': {'type': 'string', 'description': '论文ID'}, 'review_aspects': {'anyOf': [{'items': {'type': 'string'}, 'type': 'array'}, {'type': 'null'}], 'default': None, 'description': '评审维度列表，默认全部维度', 'type': 'string'}}",
+          "output_type": "string",
+          "params": {},
+          "source": "mcp",
+          "usage": "math-modeling-paper-",
+          "metadata": null
+        },
+        {
+          "class_name": "generate_solution_code",
+          "name": "generate_solution_code",
+          "description": "根据问题描述生成求解代码",
+          "inputs": "{'problem_description': {'type': 'string', 'description': '问题描述'}, 'algorithm_type': {'default': 'optimization', 'type': 'string', 'description': '算法类型（optimization/prediction/classification/clustering）'}, 'programming_language': {'default': 'python', 'type': 'string', 'description': '编程语言（python/matlab）'}}",
+          "output_type": "string",
+          "params": {},
+          "source": "mcp",
+          "usage": "math-modeling-paper-",
+          "metadata": null
+        },
+        {
+          "class_name": "generate_visualization_code",
+          "name": "generate_visualization_code",
+          "description": "生成数据可视化代码",
+          "inputs": "{'data_description': {'type': 'string', 'description': '数据描述'}, 'chart_type': {'default': 'line', 'type': 'string', 'description': '图表类型（line/scatter/bar/pie/heatmap/3d）'}, 'programming_language': {'default': 'python', 'type': 'string', 'description': '编程语言'}}",
+          "output_type": "string",
+          "params": {},
+          "source": "mcp",
+          "usage": "math-modeling-paper-",
+          "metadata": null
+        },
+        {
+          "class_name": "suggest_structure_optimization",
+          "name": "suggest_structure_optimization",
+          "description": "分析论文结构并给出优化建议",
+          "inputs": "{'paper_id': {'type': 'string', 'description': '论文ID'}}",
+          "output_type": "string",
+          "params": {},
+          "source": "mcp",
+          "usage": "math-modeling-paper-",
+          "metadata": null
+        },
+        {
+          "class_name": "generate_review_report_docx",
+          "name": "generate_review_report_docx",
+          "description": "生成 Word 格式的评审报告",
+          "inputs": "{'paper_id': {'type': 'string', 'description': '论文ID'}, 'output_dir': {'default': 'output', 'type': 'string', 'description': '输出目录'}}",
+          "output_type": "string",
+          "params": {},
+          "source": "mcp",
+          "usage": "math-modeling-paper-",
+          "metadata": null
         }
       ],
       "managed_agents": [],
-      "model_id": 3,
-      "model_name": "deepseek-ai/DeepSeek-V4-Flash",
-      "business_logic_model_id": 3,
-      "business_logic_model_name": "deepseek-ai/DeepSeek-V4-Flash"
+      "model_id": 38,
+      "model_name": "Qwen/Qwen3.6-35B-A3B",
+      "business_logic_model_id": 38,
+      "business_logic_model_name": "Qwen/Qwen3.6-35B-A3B"
     }
   },
-  "mcp_info": []
+  "mcp_info": [
+    {
+      "mcp_server_name": "math-modeling-paper-",
+      "mcp_url": "http://192.168.2.1:8004/sse"
+    }
+  ]
 }

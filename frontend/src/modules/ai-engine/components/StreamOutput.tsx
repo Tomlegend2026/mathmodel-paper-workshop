@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Spin, Button } from 'antd';
-import { RestOutlined, CopyOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { RefreshOutlined, CopyOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
@@ -55,7 +55,7 @@ export default function StreamOutput({ content, isStreaming, onRegenerate, langu
         </Button>
         {onRegenerate && (
           <Button
-            icon={<RestOutlined />}
+            icon={<RefreshOutlined />}
             size="small"
             onClick={onRegenerate}
             style={{ borderRadius: 6 }}
@@ -87,9 +87,54 @@ export default function StreamOutput({ content, isStreaming, onRegenerate, langu
             <code>{content}</code>
           </pre>
         ) : (
-          <div style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+          <ReactMarkdown
+            components={{
+              code({ node, inline, className, children, ...props }) {
+                const match = /language-(\w+)/.exec(className || '');
+                return !inline && match ? (
+                  <pre
+                    style={{
+                      background: '#1a1a2e',
+                      padding: 12,
+                      borderRadius: 6,
+                      overflowX: 'auto',
+                      fontFamily: "'Consolas', 'Monaco', monospace",
+                      fontSize: 14,
+                    }}
+                  >
+                    <code {...props}>{children}</code>
+                  </pre>
+                ) : (
+                  <code
+                    style={{
+                      background: '#3d3d5c',
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      fontFamily: "'Consolas', 'Monaco', monospace",
+                    }}
+                    {...props}
+                  >
+                    {children}
+                  </code>
+                );
+              },
+              math({ node, inline, className, children, ...props }) {
+                return (
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html: katex.renderToString(children as string, {
+                        throwOnError: false,
+                        displayMode: !inline,
+                      }),
+                    }}
+                    {...props}
+                  />
+                );
+              },
+            }}
+          >
             {content}
-          </div>
+          </ReactMarkdown>
         )}
       </div>
     </div>

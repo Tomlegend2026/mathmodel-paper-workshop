@@ -11,8 +11,10 @@ import os
 import sys
 import json
 import tempfile
+import re
 from pathlib import Path
 from typing import Optional, Dict, List, Any
+from urllib.parse import urlparse
 
 from fastmcp import FastMCP, Context
 import yaml
@@ -67,8 +69,13 @@ async def upload_and_parse_paper(
     - Word (.docx)
     - 纯文本 (.txt)
     
+    支持的输入方式：
+    - 本地文件路径
+    - HTTP/HTTPS URL
+    - S3 URL (s3://...)
+    
     Args:
-        file_path: 论文文件路径（PDF/DOCX/TXT）
+        file_path: 论文文件路径或 URL（PDF/DOCX/TXT）
         paper_type: 论文类型，默认 math_modeling
     
     Returns:
@@ -76,30 +83,58 @@ async def upload_and_parse_paper(
     """
     print(f"[MCP] 解析论文: {file_path}")
     
-    # 读取文件
-    if not Path(file_path).exists():
-        return {"error": f"文件不存在: {file_path}"}
+    # 检测输入类型：URL 还是本地路径
+    is_url = file_path.startswith(('http://', 'https://', 's3://'))
     
-    # 提取文本内容（简化版）
-    content = _extract_text_from_file(file_path)
+    local_file_path = file_path
+    temp_file = None
     
-    # 提取元数据
-    metadata = {
-        "file_name": Path(file_path).name,
-        "file_size": Path(file_path).stat().st_size,
-        "paper_type": paper_type,
-        "word_count": len(content)
-    }
+    try:
+        # 如果是 URL，先下载文件
+        if is_url:
+            print(f"[MCP] 检测到 URL，正在下载文件...")
+            local_file_path = _download_file_from_url(file_path)
+            if not local_file_path:
+                return {"error": f"文件下载失败: {file_path}"}
+            temp_file = local_file_path  # 标记为临时文件，需要清理
+        
+        # 读取文件
+        if not Path(local_file_path).exists():
+            return {"error": f"文件不存在: {local_file_path}"}
+        
+        # 提取文本内容
+        content = _extract_text_from_file(local_file_path)
+        
+        # 提取元数据
+        metadata = {
+            "file_name": Path(local_file_path).name,
+            "file_size": Path(local_file_path).stat().st_size,
+            "paper_type": paper_type,
+            "word_count": len(content),
+            "source": "url" if is_url else "local"
+        }
+        
+        # 保存到临时存储
+        _save_paper_data(local_file_path, content, metadata)
+        
+        return {
+            "success": True,
+            "metadata": metadata,
+            "preview": content[:1000] + "..." if len(content) > 1000 else content,
+            "message": f"成功解析论文，共 {metadata['word_count']} 字"
+        }
     
-    # 保存到临时存储
-    _save_paper_data(file_path, content, metadata)
+    except Exception as e:
+        return {"error": f"解析失败: {str(e)}"}
     
-    return {
-        "success": True,
-        "metadata": metadata,
-        "preview": content[:1000] + "..." if len(content) > 1000 else content,
-        "message": f"成功解析论文，共 {metadata['word_count']} 字"
-    }
+    finally:
+        # 清理临时下载的文件
+        if temp_file and Path(temp_file).exists():
+            try:
+                Path(temp_file).unlink()
+                print(f"[MCP] 已清理临时文件: {temp_file}")
+            except:
+                pass
 
 
 # ============================================================
@@ -426,6 +461,111 @@ async def generate_review_report_docx(
 # 辅助函数
 # ============================================================
 
+def _download_file_from_url(url: str) -> Optional[str]:
+    """
+    从 URL 下载文件到临时目录
+    
+    支持：
+    - HTTP/HTTPS URL（包括 Nexent 代理 URL）
+    - S3 URL (s3://bucket/key)
+    
+    Returns:
+        本地临时文件路径，失败返回 None
+    """
+    try:
+        from urllib.parse import urlparse, parse_qs, unquote
+        
+        # 创建临时目录
+        temp_dir = _data_dir / "temp_downloads"
+        temp_dir.mkdir(exist_ok=True)
+        
+        # 生成临时文件名
+        # 从 URL 中提取文件扩展名
+        file_ext = '.tmp'
+        if '.docx' in url:
+            file_ext = '.docx'
+        elif '.pdf' in url:
+            file_ext = '.pdf'
+        elif '.txt' in url:
+            file_ext = '.txt'
+        
+        temp_filename = f"download_{hash(url) % 10000:04d}{file_ext}"
+        temp_path = temp_dir / temp_filename
+        
+        print(f"[MCP] 原始 URL: {url[:200]}..." if len(url) > 200 else f"[MCP] 原始 URL: {url}")
+        
+        # 处理不同类型的 URL
+        download_url = url
+        
+        # 检测是否是 Nexent 代理 URL 格式
+        if 'presigned_url=' in url:
+            print(f"[MCP] 检测到 Nexent 代理 URL，正在提取真实的文件地址...")
+            # 从查询参数中提取 presigned_url
+            parsed = urlparse(url)
+            query_params = parse_qs(parsed.query)
+            
+            if 'presigned_url' in query_params:
+                # URL 解码
+                presigned_url = unquote(query_params['presigned_url'][0])
+                print(f"[MCP] 提取到 presigned_url: {presigned_url[:200]}..." if len(presigned_url) > 200 else f"[MCP] 提取到 presigned_url: {presigned_url}")
+                download_url = presigned_url
+            else:
+                print(f"[MCP] 警告: URL 中包含 presigned_url 参数但未找到")
+        
+        # 再次检查是否是 S3 URL
+        if download_url.startswith('s3://'):
+            print(f"[MCP] 警告: S3 URL 需要转换为 HTTP URL")
+            print(f"[MCP] 请提供 HTTP/HTTPS URL 而不是 S3 URL")
+            return None
+        
+        elif download_url.startswith(('http://', 'https://')):
+            # HTTP/HTTPS URL - 直接下载
+            print(f"[MCP] 正在下载: {download_url[:200]}..." if len(download_url) > 200 else f"[MCP] 正在下载: {download_url}")
+            print(f"[MCP] 保存到: {temp_path}")
+            
+            # 检查是否是 Docker 内部地址，需要转换为外部地址
+            original_url = download_url
+            if 'nexent-minio:9000' in download_url:
+                print(f"[MCP] 检测到 Docker 内部地址 nexent-minio:9000")
+                # TODO: 这里需要根据实际配置替换为正确的 MinIO 外部地址
+                # 常见的外部地址可能是 localhost:9000 或 192.168.2.1:9000
+                # 暂时尝试使用 localhost:9000
+                download_url = download_url.replace('nexent-minio:9000', 'localhost:9000')
+                print(f"[MCP] 已转换为外部地址: {download_url[:200]}..." if len(download_url) > 200 else f"[MCP] 已转换为外部地址: {download_url}")
+            
+            try:
+                response = requests.get(download_url, timeout=60, stream=True)
+                response.raise_for_status()
+            except Exception as e:
+                print(f"[MCP] 下载失败: {str(e)}")
+                # 如果 localhost 失败，尝试其他可能的地址
+                if 'localhost:9000' in download_url and download_url != original_url:
+                    print(f"[MCP] 尝试使用 127.0.0.1:9000...")
+                    download_url = original_url.replace('nexent-minio:9000', '127.0.0.1:9000')
+                    response = requests.get(download_url, timeout=60, stream=True)
+                    response.raise_for_status()
+                else:
+                    raise
+            
+            # 写入文件
+            with open(temp_path, 'wb') as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
+            
+            print(f"[MCP] 文件下载成功: {temp_path}")
+            return str(temp_path)
+        
+        else:
+            print(f"[MCP] 不支持的 URL 格式: {download_url}")
+            return None
+    
+    except Exception as e:
+        print(f"[MCP] 文件下载失败: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return None
+
 def _call_llm(prompt: str) -> str:
     """调用 SiliconFlow LLM API"""
     headers = {
@@ -610,4 +750,4 @@ if __name__ == "__main__":
         print("⚠️ 警告: 未配置 SILICONFLOW_API_KEY，请在 .env 文件中设置")
     
     # 启动 FastMCP 服务器
-    mcp.run(transport="sse", host="0.0.0.0", port=8001)
+    mcp.run(transport="sse", host="0.0.0.0", port=8004)

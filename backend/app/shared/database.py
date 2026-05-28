@@ -36,6 +36,6 @@ async def init_db():
         # 导入所有模型，这样 SQLAlchemy 才知道要创建哪些表
         from ..modules.auth.models import User
         from ..modules.project.models import Project
-        from ..modules.wiki.models import Problem
+        # 在这里导入其他模型...
 
         await conn.run_sync(Base.metadata.create_all)

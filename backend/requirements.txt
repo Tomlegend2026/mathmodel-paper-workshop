@@ -2,8 +2,8 @@ alembic==1.18.4
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.13.0
-aiosqlite==0.20.0
-bcrypt==4.0.1
+asyncpg==0.31.0
+bcrypt==5.0.0
 cffi==2.0.0
 click==8.3.3
 colorama==0.4.6
@@ -31,10 +31,3 @@ starlette==1.0.0
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 uvicorn==0.46.0
-
-# MCP Server Dependencies
-fastmcp>=2.0.0
-PyYAML>=6.0
-python-docx>=1.1.0
-PyPDF2>=3.0.0
-requests>=2.31.0

@@ -1,11 +1,9 @@
 from pydantic_settings import BaseSettings
 from functools import lru_cache
-import os
 
 class Settings(BaseSettings):
-    # 数据库配置 - 默认使用高斯数据库（OpenGauss）
-    # 格式: postgresql+asyncpg://用户名:密码@主机:端口/数据库名
-    DATABASE_URL: str = "postgresql+asyncpg://omm:dev123456@localhost:5432/postgres"
+    # 数据库配置
+    DATABASE_URL: str = "postgresql+asyncpg://admin:dev123456@localhost:5432/mathmodel"
 
     # JWT 配置
     SECRET_KEY: str = "your-super-secret-key-change-in-production"

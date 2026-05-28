@@ -1,12 +1,7 @@
-import sys
-import os
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from app.shared.database import engine, Base
-from app.modules.auth.models import User
-from app.modules.project.models import Project
-from app.modules.wiki.models import Problem
-from app.modules.knowledge.models import PaperKnowledge
+from .database import engine, Base
+from .modules.auth.models import User
+from .modules.project.models import Project
+from .modules.wiki.models import Problem
 
 async def create_tables():
     async with engine.begin() as conn:

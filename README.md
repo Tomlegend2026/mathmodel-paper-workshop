@@ -1,6 +1,6 @@
 # 数模论文工坊 - 论文评审助手集成
 
-一个集成了 Nexent 零代码平台智能体的数学建模论文写作辅助系统。
+一个集成了 **华为 ModelEngine Nexent** 零代码平台智能体的数学建模论文写作辅助系统，可用于**华为AI训练营**。
 
 ## 🚀 快速开始
 
@@ -9,6 +9,7 @@
 - Node.js 18+
 - Python 3.10+
 - Git
+- SiliconFlow API Key
 
 ### 安装
 
@@ -24,6 +25,9 @@ npm install
 # 安装后端依赖
 cd ../backend
 pip install -r requirements.txt
+
+# 安装 MCP Server 依赖
+pip install fastmcp uvicorn python-docx PyPDF2 requests pyyaml
 ```
 
 ### 运行
@@ -33,7 +37,10 @@ pip install -r requirements.txt
 cd backend
 uvicorn app.main:app --reload --port 8000
 
-# 启动前端（终端 2）
+# 启动 MCP Server（终端 2）- 端口 8004
+python mcp_server.py
+
+# 启动前端（终端 3）
 cd frontend
 npm run dev
 ```
@@ -52,9 +59,9 @@ npm run dev
 4. **论文写作** - 撰写完整论文
 5. **结果优化** - 优化和改进
 
-### 2. 论文评审助手  ✨ NEW
+### 2. 论文评审助手 ✨
 
-基于 Nexent 零代码平台的智能评审系统：
+基于 **Nexent 零代码平台**的智能评审系统：
 
 - ✅ 自动识别论文类型（数模/学术/学位/课程）
 - ✅ 多维度评审（5 个维度，100 分制）
@@ -63,171 +70,113 @@ npm run dev
 
 **访问路径**：登录后点击左侧菜单 "论文评审"
 
-### 3. MCP 服务器 - 文档解析  ✨ NEW
+### 3. MCP 服务器 - 文档解析 ✨
 
 支持读取 **PDF**、**Word (.docx)** 和 **纯文本 (.txt)** 格式的论文文件：
 
 - ✅ PDF 文件解析（PyPDF2）
 - ✅ Word 文档解析（python-docx）
 - ✅ 纯文本文件解析
-- ✅ 与 AI 客户端集成（Claude Desktop, Cursor, VS Code）
+- ✅ 与 Nexent/AI 客户端集成
 
-**配置指南**：查看 [MCP_SETUP_GUIDE.md](./MCP_SETUP_GUIDE.md)
+---
 
-**快速测试**：
-```bash
-python test_mcp_server.py
+## 🔧 华为AI训练营集成
+
+本项目支持与**华为AI训练营**结合使用，通过 Nexent 平台部署论文评审智能体。
+
+### 架构图
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    华为AI训练营 / Nexent                      │
+│  ┌─────────────────────────────────────────────────────┐   │
+│  │              论文评审助手 (Nexent Agent)                │   │
+│  │  - 智能体编排                                          │   │
+│  │  - MCP 工具调用                                        │   │
+│  └─────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+                             │ SSE
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  MCP Server (FastMCP)                        │
+│  - upload_and_parse_paper    # 论文解析                      │
+│  - comprehensive_review      # 多维度评审                    │
+│  - generate_solution_code    # 代码生成                      │
+│  - generate_visualization_code  # 图表生成                  │
+│  - suggest_structure_optimization  # 结构优化               │
+│  - generate_review_report_docx  # Word报告                  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 配置步骤
+
+详细配置指南请查看 [HUAWEI_AI_TRAINING_CAMP_INTEGRATION.md](./HUAWEI_AI_TRAINING_CAMP_INTEGRATION.md)
+
+快速配置：
+
+1. 启动 MCP Server：`python mcp_server.py`
+2. 在 Nexent 中添加 MCP 服务器
+3. 导入 `nexent/paper_review_assistant.json` 智能体配置
+
+---
+
+## 🛠️ 可用 MCP 工具
+
+| 工具名称 | 功能 | 参数 |
+|---------|------|------|
+| `upload_and_parse_paper` | 解析论文文件 | file_path, paper_type |
+| `comprehensive_review` | 多维度评审 | paper_id, review_aspects |
+| `generate_solution_code` | 生成代码方案 | problem_description, algorithm_type |
+| `generate_visualization_code` | 建议图表 | data_description, chart_type |
+| `suggest_structure_optimization` | 结构优化建议 | paper_id |
+| `generate_review_report_docx` | 生成 Word 报告 | paper_id, output_dir |
+
+---
+
+## ⚙️ 环境变量
+
+MCP Server 环境变量：
+
+```env
+SILICONFLOW_API_KEY=your_api_key_here
+LLM_MODEL=Qwen/Qwen2.5-VL-72B-Instruct
+LLM_BASE_URL=https://api.siliconflow.cn/v1
 ```
 
 ---
 
-## ️ 技术架构
-
-### 前端
-
-- **框架**：React 19 + TypeScript
-- **UI 库**：Ant Design
-- **构建工具**：Vite
-- **路由**：React Router v6
-- **状态管理**：Zustand
-
-### 后端
-
-- **框架**：FastAPI
-- **数据库**：SQLite + SQLAlchemy
-- **认证**：JWT
-
-### AI 集成
-
-- **平台**：Nexent 零代码平台
-- **模型**：DeepSeek-V4-Flash
-- **配置**：JSON 导出导入
-
----
-
-## 📂 项目结构
+## 📁 项目结构
 
 ```
-mathmodel-paper-workshop/
-├── frontend/                    # 前端应用
-│   ├── src/
-│   │   ├── app/                 # 应用配置
-│   │   │   ├── layout/          # 布局组件
-│   │   │   └── routes.tsx       # 路由配置
-│   │   ── modules/             # 功能模块
-│   │       ├── review/          # 论文评审 
-│   │       │   ├── PaperReviewPage.tsx
-│   │       │   └── index.ts
-│   │       ├── steps/           # 五步写作流程
-│   │       ├── ai-engine/       # AI 引擎
-│   │       └── ...
-│   ── package.json
-├── backend/                     # 后端服务
+mathmodel_workshop/
+├── mcp_server.py                    # MCP Server 入口
+├── nexent/
+│   └── paper_review_assistant.json  # Nexent 智能体配置
+├── backend/                          # FastAPI 后端
 │   ├── app/
-│   │   ├── modules/
-│   │   │   ├── review/          # 评审 API ⭐
-│   │   │   │   ├── router.py
-│   │   │   │   └── schemas.py
-│   │   │   └── ...
-│   │   └── main.py
+│   │   ├── modules/                # 业务模块
+│   │   └── main.py                 # 入口
 │   └── requirements.txt
-├── nexent/                      # Nexent 配置 ⭐
-│   └── paper_review_assistant.json
-├── NEXENT_SUBMISSION.md         # 提交文档 ⭐
-└── README.md
+├── frontend/                        # React 前端
+│   ├── src/
+│   │   └── modules/
+│   │       ├── ai-engine/          # AI 引擎
+│   │       ├── review/             # 评审页面
+│   │       └── steps/              # 写作流程
+│   └── package.json
+├── docs/                            # 文档
+└── HUAWEI_AI_TRAINING_CAMP_INTEGRATION.md  # 华为AI训练营集成指南
 ```
 
 ---
 
-## 📝 Nexent 智能体集成
+## 📚 相关文档
 
-### 配置说明
-
-本项目的论文评审功能基于 Nexent 零代码平台配置的智能体：
-
-- **配置文件**：`nexent/paper_review_assistant.json`
-- **智能体名称**：论文评审助手
-- **使用模型**：deepseek-ai/DeepSeek-V4-Flash
-- **最大步骤数**：10
-
-### 业务逻辑
-
-智能体采用系统化的评审流程：
-
-1. 接收论文（支持纯文本、PDF、DOCX）
-2. 识别论文类型
-3. 选择评审标准
-4. 逐维度评审
-5. 计算总分
-6. 生成改进建议
-7. 输出评审报告
-
-### 评审维度
-
-**数学建模论文**（100分）
-- 问题分析（20分）
-- 模型建立（30分）
-- 求解方法（20分）
-- 结果分析（15分）
-- 论文写作（15分）
-
-**学术论文**（100分）
-- 创新性（25分）
-- 方法论（25分）
-- 实验与结果（20分）
-- 文献综述（15分）
-- 写作质量（15分）
-
-**学位论文**（100分）
-- 研究意义（15分）
-- 文献综述（20分）
-- 研究方法（20分）
-- 研究结果（25分）
-- 论文规范（20分）
-
-**课程论文**（100分）
-- 问题理解（20分）
-- 内容质量（30分）
-- 分析能力（20分）
-- 结构组织（15分）
-- 格式规范（15分）
-
----
-
-##  开发指南
-
-### 前端开发
-
-```bash
-cd frontend
-npm run dev        # 开发模式
-npm run build      # 构建生产版本
-npm run lint       # 代码检查
-```
-
-### 后端开发
-
-```bash
-cd backend
-uvicorn app.main:app --reload    # 开发服务器
-pytest                            # 运行测试
-```
-
----
-
-## 📚 文档
-
-- [Nexent 提交文档](NEXENT_SUBMISSION.md)
-- [GitHub 提交指南](GITHUB_SUBMISSION_GUIDE.md)
-- [智能体配置说明](nexent/)
-
----
-
-## 👨‍💻 作者
-
-- **学号**：20240962
-- **姓名**：Tom
-- **GitHub**：https://github.com/Tomlegend2026
+- [华为AI训练营集成指南](./HUAWEI_AI_TRAINING_CAMP_INTEGRATION.md)
+- [Nexent MCP 配置指南](./NEXENT_MCP_CONFIG_GUIDE.md)
+- [本地 Nexent MCP 解决方案](./LOCAL_NEXENT_MCP_SOLUTION.md)
+- [MCP 服务器更新说明](./MCP_SERVER_UPDATE.md)
 
 ---
 
@@ -237,8 +186,11 @@ MIT License
 
 ---
 
-##  致谢
+## 👤 作者
 
-- [Nexent](https://github.com/ModelEngine-Group/nexent) - 零代码智能体开发平台
-- [Ant Design](https://ant.design/) - UI 组件库
-- [FastAPI](https://fastapi.tiangolo.com/) - 后端框架
+Tom - [GitHub](https://github.com/Tomlegend2026)
+
+## 🙏 致谢
+
+- [Nexent (ModelEngine)](https://github.com/ModelEngine-Group/nexent) - 零代码智能体平台
+- [SiliconFlow](https://siliconflow.cn) - LLM API

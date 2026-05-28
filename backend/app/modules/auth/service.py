@@ -8,7 +8,7 @@ from sqlalchemy import select
 
 from .models import User
 from .schemas import UserCreate, UserLogin, Token
-from app.shared.config import get_settings
+from ..shared.config import get_settings
 
 settings = get_settings()
 

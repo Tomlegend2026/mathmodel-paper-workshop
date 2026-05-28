@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Button, Card, Form, Input, Steps, Tag, message, Tooltip } from 'antd';
+import { Button, Card, Input, Steps, Tag, message } from 'antd';
 import { ArrowLeftOutlined, ArrowRightOutlined, BulbOutlined, FileTextOutlined } from '@ant-design/icons';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getProject, updateProject } from '../../project/api';
 import { useProjectStore } from '../../project/store';
 import { useAIStore, getAIAdapter, problemAnalysisPrompt, keywordExtractionPrompt, StreamOutput } from '../../ai-engine';
-import { step1GuideTips, withGuideTip, hasSeenTip, markTipAsSeen } from '../../guide';
-import type { Project } from '../../../shared/types';
+import type { Project } from '../../shared/types';
 
 const { TextArea } = Input;
 
@@ -114,8 +113,7 @@ export default function Step1Page() {
           ...project.step_data,
           step1: {
             problem_title: problemTitle,
-            problem_content: problemContent,
-            problem_analysis: analysisResult,
+            problem_analysis: problemContent,
             keywords,
           },
         },
@@ -169,63 +167,43 @@ export default function Step1Page() {
       >
         <Form layout="vertical" size="large">
           <Form.Item label="题目名称">
-            {withGuideTip(
-              <Input
-                value={problemTitle}
-                onChange={(e) => setProblemTitle(e.target.value)}
-                placeholder="请输入题目名称"
-                style={{ borderRadius: 8 }}
-                onFocus={() => markTipAsSeen(step1GuideTips.problemTitle.id)}
-              />,
-              step1GuideTips.problemTitle,
-              !hasSeenTip(step1GuideTips.problemTitle.id)
-            )}
+            <Input
+              value={problemTitle}
+              onChange={(e) => setProblemTitle(e.target.value)}
+              placeholder="请输入题目名称"
+              style={{ borderRadius: 8 }}
+            />
           </Form.Item>
 
           <Form.Item label="题目内容">
-            {withGuideTip(
-              <TextArea
-                value={problemContent}
-                onChange={(e) => setProblemContent(e.target.value)}
-                placeholder="请输入完整的题目内容..."
-                rows={8}
-                style={{ borderRadius: 8 }}
-                onFocus={() => markTipAsSeen(step1GuideTips.problemContent.id)}
-              />,
-              step1GuideTips.problemContent,
-              !hasSeenTip(step1GuideTips.problemContent.id)
-            )}
+            <TextArea
+              value={problemContent}
+              onChange={(e) => setProblemContent(e.target.value)}
+              placeholder="请输入完整的题目内容..."
+              rows={8}
+              style={{ borderRadius: 8 }}
+            />
           </Form.Item>
 
           <div style={{ display: 'flex', gap: 8 }}>
-            {withGuideTip(
-              <Button
-                type="primary"
-                icon={<BulbOutlined />}
-                onClick={handleAnalyze}
-                loading={isAnalyzing}
-                disabled={!isConfigured}
-                style={{ borderRadius: 8 }}
-                onMouseEnter={() => markTipAsSeen(step1GuideTips.aiAnalyze.id)}
-              >
-                AI 分析题目
-              </Button>,
-              step1GuideTips.aiAnalyze,
-              !hasSeenTip(step1GuideTips.aiAnalyze.id)
-            )}
-            {withGuideTip(
-              <Button
-                icon={<FileTextOutlined />}
-                onClick={handleExtractKeywords}
-                disabled={!isConfigured}
-                style={{ borderRadius: 8 }}
-                onMouseEnter={() => markTipAsSeen(step1GuideTips.extractKeywords.id)}
-              >
-                提取关键词
-              </Button>,
-              step1GuideTips.extractKeywords,
-              !hasSeenTip(step1GuideTips.extractKeywords.id)
-            )}
+            <Button
+              type="primary"
+              icon={<BulbOutlined />}
+              onClick={handleAnalyze}
+              loading={isAnalyzing}
+              disabled={!isConfigured}
+              style={{ borderRadius: 8 }}
+            >
+              AI 分析题目
+            </Button>
+            <Button
+              icon={<FileTextOutlined />}
+              onClick={handleExtractKeywords}
+              disabled={!isConfigured}
+              style={{ borderRadius: 8 }}
+            >
+              提取关键词
+            </Button>
           </div>
         </Form>
 

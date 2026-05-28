@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from . import schemas, service
-from app.shared.database import get_db
+from ..shared.database import get_db
 
 router = APIRouter()
 
