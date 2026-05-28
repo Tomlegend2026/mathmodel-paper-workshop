@@ -52,7 +52,7 @@ npm run dev
 4. **论文写作** - 撰写完整论文
 5. **结果优化** - 优化和改进
 
-### 2. 论文评审助手  NEW
+### 2. 论文评审助手  ✨ NEW
 
 基于 Nexent 零代码平台的智能评审系统：
 
@@ -62,6 +62,22 @@ npm run dev
 - ✅ 按优先级分类改进建议
 
 **访问路径**：登录后点击左侧菜单 "论文评审"
+
+### 3. MCP 服务器 - 文档解析  ✨ NEW
+
+支持读取 **PDF**、**Word (.docx)** 和 **纯文本 (.txt)** 格式的论文文件：
+
+- ✅ PDF 文件解析（PyPDF2）
+- ✅ Word 文档解析（python-docx）
+- ✅ 纯文本文件解析
+- ✅ 与 AI 客户端集成（Claude Desktop, Cursor, VS Code）
+
+**配置指南**：查看 [MCP_SETUP_GUIDE.md](./MCP_SETUP_GUIDE.md)
+
+**快速测试**：
+```bash
+python test_mcp_server.py
+```
 
 ---
 

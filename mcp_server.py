@@ -20,6 +20,12 @@ import requests
 from docx import Document
 from docx.shared import Inches, Pt
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+try:
+    from PyPDF2 import PdfReader
+    PDF_SUPPORT = True
+except ImportError:
+    PDF_SUPPORT = False
+    print("警告: PyPDF2 未安装，PDF 解析功能不可用。请运行: pip install PyPDF2")
 
 # 初始化配置
 _root = Path(__file__).parent
@@ -55,6 +61,11 @@ async def upload_and_parse_paper(
 ) -> Dict[str, Any]:
     """
     上传数学建模竞赛论文并解析内容
+    
+    支持的文件格式：
+    - PDF (.pdf)
+    - Word (.docx)
+    - 纯文本 (.txt)
     
     Args:
         file_path: 论文文件路径（PDF/DOCX/TXT）
@@ -443,16 +454,36 @@ def _call_llm(prompt: str) -> str:
 
 
 def _extract_text_from_file(file_path: str) -> str:
-    """从文件中提取文本（简化版）"""
+    """从文件中提取文本（支持 PDF、DOCX、TXT）"""
     try:
         if file_path.endswith('.txt'):
             return Path(file_path).read_text(encoding='utf-8')
         elif file_path.endswith('.docx'):
             doc = Document(file_path)
-            return '\n'.join([para.text for para in doc.paragraphs])
+            text_parts = []
+            for para in doc.paragraphs:
+                if para.text.strip():  # 跳过空段落
+                    text_parts.append(para.text)
+            return '\n'.join(text_parts)
+        elif file_path.endswith('.pdf'):
+            if not PDF_SUPPORT:
+                return "错误: PyPDF2 未安装。请运行 'pip install PyPDF2' 来启用 PDF 解析功能。"
+            
+            pdf_text = []
+            reader = PdfReader(file_path)
+            
+            # 提取每页文本
+            for page_num, page in enumerate(reader.pages, 1):
+                try:
+                    text = page.extract_text()
+                    if text:
+                        pdf_text.append(f"--- 第 {page_num} 页 ---\n{text}")
+                except Exception as e:
+                    pdf_text.append(f"--- 第 {page_num} 页 ---\n[解析失败: {str(e)}]")
+            
+            return '\n\n'.join(pdf_text)
         else:
-            # PDF 需要额外的库，这里简化处理
-            return f"文件类型: {file_path}\n请手动粘贴文本内容"
+            return f"不支持的文件格式: {file_path}\n支持的格式: .txt, .docx, .pdf"
     except Exception as e:
         return f"文件解析失败: {str(e)}"
 
