@@ -5,6 +5,7 @@ import { Step1Page, Step2Page, Step3Page, Step4Page, Step5Page } from '../module
 import MainLayout from './layout/MainLayout';
 import WikiPage from '../modules/wiki/pages/WikiPage';
 import KnowledgePage from '../modules/knowledge/pages/KnowledgePage';
+import { PaperReviewPage } from '../modules/review';
 
 export const router = createBrowserRouter([
   {
@@ -107,6 +108,16 @@ export const router = createBrowserRouter([
       <AuthGuard>
         <MainLayout>
           <KnowledgePage />
+        </MainLayout>
+      </AuthGuard>
+    ),
+  },
+  {
+    path: '/review',
+    element: (
+      <AuthGuard>
+        <MainLayout>
+          <PaperReviewPage />
         </MainLayout>
       </AuthGuard>
     ),

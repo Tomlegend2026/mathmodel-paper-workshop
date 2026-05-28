@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "skills": {
+    "self-improving-agent": {
+      "source": "modelscope.cn",
+      "sourceType": "well-known",
+      "computedHash": "aeaea071a2d738688f585a0d83314f6ed0809ebdfa1f4ff5df483ce613fd8cb3"
+    },
+    "skill-vetter": {
+      "source": "modelscope.cn",
+      "sourceType": "well-known",
+      "computedHash": "16dafe454cee5809a07b0a649ffe3463b1515d49ad56f19cd631b9324c132932"
+    },
+    "summarize": {
+      "source": "modelscope.cn",
+      "sourceType": "well-known",
+      "computedHash": "8b1b755a58e22504b23334b2d030f2475d060ec37a1dfa9e55d1126d9c5664b2"
+    },
+    "using-superpowers": {
+      "source": "modelscope.cn",
+      "sourceType": "well-known",
+      "computedHash": "5ed84a512f8664cc440ff26b19a0087eae6b2979e9e79cb26366b7f7b134e758"
+    },
+    "web-search": {
+      "source": "modelscope.cn",
+      "sourceType": "well-known",
+      "computedHash": "03f2bbcc8d5784554863233281235f0453506771515ad3baed942ccaf972939b"
+    }
+  }
+}

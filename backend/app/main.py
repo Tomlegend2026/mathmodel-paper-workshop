@@ -7,6 +7,7 @@ from app.modules.auth.router import router as auth_router
 from app.modules.project.router import router as project_router
 from app.modules.wiki.router import router as wiki_router
 from app.modules.knowledge.router import router as knowledge_router
+from app.modules.review.router import router as review_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -36,6 +37,7 @@ app.include_router(auth_router, prefix="/api/auth", tags=["认证"])
 app.include_router(project_router, prefix="/api/projects", tags=["项目"])
 app.include_router(wiki_router, prefix="/api/wiki", tags=["题库"])
 app.include_router(knowledge_router, prefix="/api/knowledge", tags=["知识库"])
+app.include_router(review_router, tags=["论文评审"])
 
 @app.get("/")
 async def root():

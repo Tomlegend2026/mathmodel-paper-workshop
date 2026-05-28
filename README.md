@@ -1,150 +1,228 @@
-# 数模论文工坊 (Mathematical Modeling Paper Workshop)
+# 数模论文工坊 - 论文评审助手集成
 
-一个智能化的数学建模论文写作辅助平台，提供从问题分析到论文生成的完整工作流程。
-
-## ✨ 主要特性
-
-- 🎯 **五步引导式流程**: 选题解读 → 问题分析 → 建模求解 → 论文写作 → 结果优化
-- 🤖 **多模型 AI 支持**: 支持 DeepSeek、通义千问、Kimi、智谱 AI、OpenAI、Ollama、WebLLM 等 7+ 种 AI 模型
-- 📚 **题目库管理**: 内置历年竞赛题目，支持自定义添加
-- 📝 **自动生成论文**: AI 辅助生成摘要、引言、结论等章节
-- 💾 **项目管理系统**: 保存进度，随时继续
-- 📥 **导出功能**: 支持 Markdown 格式论文下载
-- 🎨 **现代化 UI**: 基于 Ant Design 的深色主题界面
+一个集成了 Nexent 零代码平台智能体的数学建模论文写作辅助系统。
 
 ## 🚀 快速开始
 
-### Windows 用户
-双击运行 `start.bat` 文件
+### 前置要求
 
-### Linux/Mac 用户
+- Node.js 18+
+- Python 3.10+
+- Git
+
+### 安装
+
 ```bash
-chmod +x start.sh
-./start.sh
+# 克隆仓库
+git clone https://github.com/Tomlegend2026/mathmodel-paper-workshop.git
+cd mathmodel-paper-workshop
+
+# 安装前端依赖
+cd frontend
+npm install
+
+# 安装后端依赖
+cd ../backend
+pip install -r requirements.txt
 ```
 
-### 手动启动
+### 运行
 
-**后端:**
 ```bash
+# 启动后端（终端 1）
 cd backend
-python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+uvicorn app.main:app --reload --port 8000
 
-**前端:**
-```bash
+# 启动前端（终端 2）
 cd frontend
 npm run dev
 ```
 
-访问 http://localhost:5173 开始使用
+访问 http://localhost:5173
 
-## 📖 详细文档
+---
 
-查看 [STARTUP_GUIDE.md](STARTUP_GUIDE.md) 获取完整的安装和使用指南。
+## 📋 功能模块
 
-## 🛠️ 技术栈
+### 1. 五步引导式写作流程
 
-### 后端
-- FastAPI - 高性能 Python Web 框架
-- SQLAlchemy - ORM 数据库操作
-- SQLite/PostgreSQL - 数据库
-- JWT - 身份认证
+1. **选题与解读** - 理解题目要求
+2. **问题分析** - 分析问题结构
+3. **建模求解** - 建立数学模型
+4. **论文写作** - 撰写完整论文
+5. **结果优化** - 优化和改进
+
+### 2. 论文评审助手  NEW
+
+基于 Nexent 零代码平台的智能评审系统：
+
+- ✅ 自动识别论文类型（数模/学术/学位/课程）
+- ✅ 多维度评审（5 个维度，100 分制）
+- ✅ 自动生成评审报告
+- ✅ 按优先级分类改进建议
+
+**访问路径**：登录后点击左侧菜单 "论文评审"
+
+---
+
+## ️ 技术架构
 
 ### 前端
-- React 19 - 现代 JavaScript 框架
-- TypeScript - 类型安全
-- Ant Design 6 - UI 组件库
-- Vite - 构建工具
-- Zustand - 状态管理
-- React Router - 路由管理
+
+- **框架**：React 19 + TypeScript
+- **UI 库**：Ant Design
+- **构建工具**：Vite
+- **路由**：React Router v6
+- **状态管理**：Zustand
+
+### 后端
+
+- **框架**：FastAPI
+- **数据库**：SQLite + SQLAlchemy
+- **认证**：JWT
 
 ### AI 集成
-- **云端 API**: DeepSeek、通义千问、Kimi、智谱 AI、OpenAI
-- **本地部署**: Ollama（完全免费，数据私密）
-- **浏览器运行**: WebLLM（无需服务器）
-- 详见 [AI_MULTI_MODEL_SUPPORT.md](docs/AI_MULTI_MODEL_SUPPORT.md)
 
-## 📁 项目结构
+- **平台**：Nexent 零代码平台
+- **模型**：DeepSeek-V4-Flash
+- **配置**：JSON 导出导入
+
+---
+
+## 📂 项目结构
 
 ```
-```mathmodel_workshop/
-├── backend/              # FastAPI 后端服务
-│   ├── app/
-│   │   ├── modules/     # 功能模块 (auth, project, wiki, knowledge)
-│   │   ├── shared/      # 共享工具
-│   │   └── main.py      # 应用入口
-│   └── requirements.txt
-├── frontend/             # React 前端应用
+mathmodel-paper-workshop/
+├── frontend/                    # 前端应用
 │   ├── src/
-│   │   ├── modules/     # 功能模块 (auth, project, wiki, knowledge, steps)
-│   │   ├── app/         # 应用配置
-│   │   └── App.tsx
-│   └── package.json
-── docker-compose.yml    # Docker 配置
-── start.bat             # Windows 启动脚本
-── start.sh              # Linux/Mac 启动脚本
-├── start.ps1             # PowerShell 启动脚本
-└── README.md             # 项目说明
+│   │   ├── app/                 # 应用配置
+│   │   │   ├── layout/          # 布局组件
+│   │   │   └── routes.tsx       # 路由配置
+│   │   ── modules/             # 功能模块
+│   │       ├── review/          # 论文评审 
+│   │       │   ├── PaperReviewPage.tsx
+│   │       │   └── index.ts
+│   │       ├── steps/           # 五步写作流程
+│   │       ├── ai-engine/       # AI 引擎
+│   │       └── ...
+│   ── package.json
+├── backend/                     # 后端服务
+│   ├── app/
+│   │   ├── modules/
+│   │   │   ├── review/          # 评审 API ⭐
+│   │   │   │   ├── router.py
+│   │   │   │   └── schemas.py
+│   │   │   └── ...
+│   │   └── main.py
+│   └── requirements.txt
+├── nexent/                      # Nexent 配置 ⭐
+│   └── paper_review_assistant.json
+├── NEXENT_SUBMISSION.md         # 提交文档 ⭐
+└── README.md
 ```
 
-## 🎯 使用流程
+---
 
-1. **注册/登录** - 创建账号并登录系统
-2. **配置 AI** - 选择偏好的 AI 提供商（推荐 DeepSeek）
-   - 查看 [AI 配置指南](docs/AI_CONFIG_GUIDE.md) 获取 API Key
-   - 支持 7+ 种主流模型，详见 [多模型支持说明](docs/AI_MULTI_MODEL_SUPPORT.md)
-3. **创建项目** - 新建建模项目，可选择从题库选题
-4. **五步流程**:
-   - Step 1: 输入题目，AI 分析题意和关键词
-   - Step 2: 定义目标、约束和假设
-   - Step 3: 选择模型，生成方程和代码
-   - Step 4: 撰写论文各章节
-   - Step 5: 结果分析和优化
-5. **导出论文** - 下载完整的 Markdown/PDF/Word 格式论文
+## 📝 Nexent 智能体集成
 
-## 🔧 配置说明
+### 配置说明
 
-### 环境变量
+本项目的论文评审功能基于 Nexent 零代码平台配置的智能体：
 
-**后端 (backend/.env):**
-```env
-DATABASE_URL=sqlite+aiosqlite:///./mathmodel.db
-SECRET_KEY=your-secret-key
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=1440
-```
+- **配置文件**：`nexent/paper_review_assistant.json`
+- **智能体名称**：论文评审助手
+- **使用模型**：deepseek-ai/DeepSeek-V4-Flash
+- **最大步骤数**：10
 
-**前端 (frontend/.env):**
-```env
-VITE_API_URL=http://localhost:8000/api
-```
+### 业务逻辑
 
-## 🐳 Docker 部署
+智能体采用系统化的评审流程：
 
-使用 PostgreSQL 数据库：
+1. 接收论文（支持纯文本、PDF、DOCX）
+2. 识别论文类型
+3. 选择评审标准
+4. 逐维度评审
+5. 计算总分
+6. 生成改进建议
+7. 输出评审报告
+
+### 评审维度
+
+**数学建模论文**（100分）
+- 问题分析（20分）
+- 模型建立（30分）
+- 求解方法（20分）
+- 结果分析（15分）
+- 论文写作（15分）
+
+**学术论文**（100分）
+- 创新性（25分）
+- 方法论（25分）
+- 实验与结果（20分）
+- 文献综述（15分）
+- 写作质量（15分）
+
+**学位论文**（100分）
+- 研究意义（15分）
+- 文献综述（20分）
+- 研究方法（20分）
+- 研究结果（25分）
+- 论文规范（20分）
+
+**课程论文**（100分）
+- 问题理解（20分）
+- 内容质量（30分）
+- 分析能力（20分）
+- 结构组织（15分）
+- 格式规范（15分）
+
+---
+
+##  开发指南
+
+### 前端开发
+
 ```bash
-docker-compose up -d
+cd frontend
+npm run dev        # 开发模式
+npm run build      # 构建生产版本
+npm run lint       # 代码检查
 ```
 
-然后修改 `backend/.env` 中的数据库配置。
+### 后端开发
 
-## 📝 API 文档
+```bash
+cd backend
+uvicorn app.main:app --reload    # 开发服务器
+pytest                            # 运行测试
+```
 
-启动后端后访问 http://localhost:8000/docs 查看完整的 API 文档。
+---
 
-## 🤝 贡献
+## 📚 文档
 
-欢迎提交 Issue 和 Pull Request！
+- [Nexent 提交文档](NEXENT_SUBMISSION.md)
+- [GitHub 提交指南](GITHUB_SUBMISSION_GUIDE.md)
+- [智能体配置说明](nexent/)
+
+---
+
+## 👨‍💻 作者
+
+- **学号**：20240962
+- **姓名**：Tom
+- **GitHub**：https://github.com/Tomlegend2026
+
+---
 
 ## 📄 许可证
 
 MIT License
 
-## 👥 联系方式
-
-如有问题或建议，请提交 Issue。
-
 ---
 
-**祝您在数学建模竞赛中取得优异成绩！** 🏆
+##  致谢
+
+- [Nexent](https://github.com/ModelEngine-Group/nexent) - 零代码智能体开发平台
+- [Ant Design](https://ant.design/) - UI 组件库
+- [FastAPI](https://fastapi.tiangolo.com/) - 后端框架

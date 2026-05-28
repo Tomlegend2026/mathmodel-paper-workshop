@@ -9,6 +9,7 @@ import {
   CrownOutlined,
   BookOutlined,
   DatabaseOutlined,
+  CheckCircleOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../modules/auth';
@@ -46,6 +47,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       key: '/knowledge',
       icon: <DatabaseOutlined />,
       label: '优秀论文库',
+    },
+    {
+      key: '/review',
+      icon: <CheckCircleOutlined />,
+      label: '论文评审',
     },
   ];
 
@@ -102,6 +108,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             {location.pathname === '/projects/new' && '新建项目'}
             {location.pathname === '/wiki' && '题目库'}
             {location.pathname === '/knowledge' && '优秀论文库'}
+            {location.pathname === '/review' && '论文评审'}
           </div>
 
           <Dropdown menu={{ items: userMenu }} placement="bottomRight">

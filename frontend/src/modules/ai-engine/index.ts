@@ -13,6 +13,11 @@ export * from './prompts';
 // 导出配置
 export { AI_PROVIDERS, MODELS_BY_PROVIDER, RECOMMENDED_CONFIGS } from './config/providers';
 
+// Agent 集群模块
+export * from './agent';
+export { createAgentService } from './services/agent-service';
+export { default as AgentTestPage } from './pages/AgentTestPage';
+
 // 向后兼容的旧 API（已废弃，请使用 createAIAdapter）
 /** @deprecated */
 export const getAIAdapter = (config: {
