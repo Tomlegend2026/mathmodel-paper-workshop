@@ -747,7 +747,7 @@ if __name__ == "__main__":
     print("=" * 60)
     
     if not SILICONFLOW_API_KEY:
-        print("⚠️ 警告: 未配置 SILICONFLOW_API_KEY，请在 .env 文件中设置")
+        print("Warning: 未配置 SILICONFLOW_API_KEY，请在 .env 文件中设置")
     
     # 启动 FastMCP 服务器
     mcp.run(transport="sse", host="0.0.0.0", port=8004)

@@ -51,11 +51,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Optional documentation files (optional)
-# GUIDE_FEATURE.md
-# SETUP_COMPLETE.md
-# STARTUP_GUIDE.md
-
 # AI Agent Tools Directories
 .adal/
 .agents/
@@ -96,3 +91,6 @@ yarn-error.log*
 .vibe/
 .windsurf/
 .zencoder/
+
+# Temp data
+data/temp_downloads/
