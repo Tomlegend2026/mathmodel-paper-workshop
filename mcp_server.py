@@ -115,13 +115,14 @@ async def upload_and_parse_paper(
         }
         
         # 保存到临时存储
-        _save_paper_data(local_file_path, content, metadata)
+        paper_id = _save_paper_data(local_file_path, content, metadata)
         
         return {
             "success": True,
+            "paper_id": paper_id,
             "metadata": metadata,
             "preview": content[:1000] + "..." if len(content) > 1000 else content,
-            "message": f"成功解析论文，共 {metadata['word_count']} 字"
+            "message": f"成功解析论文（ID: {paper_id}），共 {metadata['word_count']} 字。请使用 paper_id='{paper_id}' 和 paper_type='{paper_type}' 进行评审。"
         }
     
     except Exception as e:
@@ -138,55 +139,132 @@ async def upload_and_parse_paper(
 
 
 # ============================================================
+# 论文类型评审配置
+# ============================================================
+REVIEW_CONFIGS = {
+    "math_modeling": {
+        "name": "数学建模论文",
+        "aspects": [
+            {"name": "问题分析", "max_score": 20, "weight": 20},
+            {"name": "模型建立", "max_score": 30, "weight": 30},
+            {"name": "求解方法", "max_score": 20, "weight": 20},
+            {"name": "结果分析", "max_score": 15, "weight": 15},
+            {"name": "论文写作", "max_score": 15, "weight": 15},
+        ]
+    },
+    "academic": {
+        "name": "学术论文",
+        "aspects": [
+            {"name": "创新性", "max_score": 25, "weight": 25},
+            {"name": "方法论", "max_score": 25, "weight": 25},
+            {"name": "实验与结果", "max_score": 20, "weight": 20},
+            {"name": "文献综述", "max_score": 15, "weight": 15},
+            {"name": "写作质量", "max_score": 15, "weight": 15},
+        ]
+    },
+    "thesis": {
+        "name": "学位论文",
+        "aspects": [
+            {"name": "研究意义", "max_score": 15, "weight": 15},
+            {"name": "文献综述", "max_score": 20, "weight": 20},
+            {"name": "研究方法", "max_score": 20, "weight": 20},
+            {"name": "研究结果", "max_score": 25, "weight": 25},
+            {"name": "论文规范", "max_score": 20, "weight": 20},
+        ]
+    },
+    "course": {
+        "name": "课程论文",
+        "aspects": [
+            {"name": "问题理解", "max_score": 20, "weight": 20},
+            {"name": "内容质量", "max_score": 30, "weight": 30},
+            {"name": "分析能力", "max_score": 20, "weight": 20},
+            {"name": "结构组织", "max_score": 15, "weight": 15},
+            {"name": "格式规范", "max_score": 15, "weight": 15},
+        ]
+    }
+}
+
+# ============================================================
 # MCP Tool 2: 多维度论文评审
 # ============================================================
 @mcp.tool()
 async def comprehensive_review(
     paper_id: str,
-    review_aspects: Optional[List[str]] = None
+    review_aspects: Optional[List[str]] = None,
+    paper_type: str = "math_modeling"
 ) -> Dict[str, Any]:
     """
     对已上传的论文进行多维度评审
     
+    支持四种论文类型，每种使用不同的评审维度和分值体系：
+    - math_modeling: 数学建模论文 (问题分析20 + 模型建立30 + 求解方法20 + 结果分析15 + 论文写作15)
+    - academic: 学术论文 (创新性25 + 方法论25 + 实验与结果20 + 文献综述15 + 写作质量15)
+    - thesis: 学位论文 (研究意义15 + 文献综述20 + 研究方法20 + 研究结果25 + 论文规范20)
+    - course: 课程论文 (问题理解20 + 内容质量30 + 分析能力20 + 结构组织15 + 格式规范15)
+    
     Args:
         paper_id: 论文ID
-        review_aspects: 评审维度列表，默认全部维度
+        review_aspects: 评审维度列表，默认使用对应论文类型的全部维度
+        paper_type: 论文类型（math_modeling/academic/thesis/course）
     
     Returns:
-        详细评审报告，包含各维度得分和改进建议
+        详细评审报告，包含各维度得分、总分、等级和改进建议
     """
-    print(f"[MCP] 评审论文: {paper_id}")
+    print(f"[MCP] 评审论文: {paper_id}, 类型: {paper_type}")
     
     # 加载论文数据
     paper_data = _load_paper_data(paper_id)
     if not paper_data:
-        return {"error": "论文未找到"}
+        return {"error": "论文未找到，请先使用 upload_and_parse_paper 上传论文"}
     
-    # 默认评审维度
-    if not review_aspects:
-        review_aspects = [
-            "选题与假设",
-            "模型建立",
-            "求解与结果",
-            "论文写作",
-            "创新性"
+    # 获取论文类型配置
+    config = REVIEW_CONFIGS.get(paper_type, REVIEW_CONFIGS["math_modeling"])
+    
+    # 确定评审维度
+    if review_aspects:
+        # 用户自定义维度，使用默认分值
+        aspects_to_review = [
+            {"name": aspect, "max_score": 20, "weight": 20}
+            for aspect in review_aspects
         ]
+    else:
+        aspects_to_review = config["aspects"]
     
-    # 调用 LLM 进行评审
+    # 调用 LLM 进行逐维度评审
     review_results = []
-    for aspect in review_aspects:
-        result = _review_single_aspect(paper_data["content"], aspect)
+    for aspect_config in aspects_to_review:
+        result = _review_single_aspect(
+            paper_data["content"],
+            aspect_config["name"],
+            aspect_config["max_score"]
+        )
         review_results.append(result)
     
-    # 计算总分
-    total_score = sum(r["score"] for r in review_results) / len(review_results)
+    # 计算加权总分
+    total_max = sum(a["max_score"] for a in aspects_to_review)
+    total_score = sum(r["score"] for r in review_results)
+    percentage = round(total_score / total_max * 100, 2)
+    
+    # 确定等级
+    if percentage >= 90:
+        grade = "优秀"
+    elif percentage >= 80:
+        grade = "良好"
+    elif percentage >= 70:
+        grade = "中等"
+    elif percentage >= 60:
+        grade = "及格"
+    else:
+        grade = "不及格"
     
     # 生成评审报告
     report = {
         "paper_id": paper_id,
-        "total_score": round(total_score, 2),
-        "max_score": 20.0,
-        "percentage": round(total_score / 20 * 100, 2),
+        "paper_type": config["name"],
+        "total_score": total_score,
+        "max_score": total_max,
+        "percentage": percentage,
+        "grade": grade,
         "aspects": review_results,
         "overall_suggestion": _generate_overall_suggestion(review_results)
     }
@@ -399,13 +477,15 @@ async def generate_review_report_docx(
     doc = Document()
     
     # 标题
-    title = doc.add_heading('数学建模论文评审报告', 0)
+    title = doc.add_heading('论文评审报告', 0)
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     
     # 基本信息
     doc.add_heading('一、基本信息', level=1)
     doc.add_paragraph(f'论文ID: {paper_id}')
-    doc.add_paragraph(f'总分: {review_report["total_score"]}/20 ({review_report["percentage"]}%)')
+    doc.add_paragraph(f'论文类型: {review_report.get("paper_type", "未指定")}')
+    doc.add_paragraph(f'总分: {review_report["total_score"]}/{review_report["max_score"]} ({review_report["percentage"]}%)')
+    doc.add_paragraph(f'等级: {review_report.get("grade", "未评定")}')
     
     # 各维度评分
     doc.add_heading('二、各维度评分', level=1)
@@ -468,6 +548,13 @@ def _download_file_from_url(url: str) -> Optional[str]:
     支持：
     - HTTP/HTTPS URL（包括 Nexent 代理 URL）
     - S3 URL (s3://bucket/key)
+    - 本地文件路径（直接返回）
+    
+    对 Nexent 环境的特殊处理：
+    - Nexent 代理 URL: http://localhost:5013/api/nb/v1/file/fetch?presigned_url=...
+      自动提取内嵌的 presigned_url 并下载
+    - Docker 内部 MinIO 地址 (nexent-minio:9000) 自动替换为可达地址
+    - S3 URL 尝试转换为 MinIO HTTP URL 下载
     
     Returns:
         本地临时文件路径，失败返回 None
@@ -482,14 +569,14 @@ def _download_file_from_url(url: str) -> Optional[str]:
         # 生成临时文件名
         # 从 URL 中提取文件扩展名
         file_ext = '.tmp'
-        if '.docx' in url:
+        if '.docx' in url.lower():
             file_ext = '.docx'
-        elif '.pdf' in url:
+        elif '.pdf' in url.lower():
             file_ext = '.pdf'
-        elif '.txt' in url:
+        elif '.txt' in url.lower():
             file_ext = '.txt'
         
-        temp_filename = f"download_{hash(url) % 10000:04d}{file_ext}"
+        temp_filename = f"download_{abs(hash(url)) % 10000:04d}{file_ext}"
         temp_path = temp_dir / temp_filename
         
         print(f"[MCP] 原始 URL: {url[:200]}..." if len(url) > 200 else f"[MCP] 原始 URL: {url}")
@@ -497,10 +584,10 @@ def _download_file_from_url(url: str) -> Optional[str]:
         # 处理不同类型的 URL
         download_url = url
         
-        # 检测是否是 Nexent 代理 URL 格式
-        if 'presigned_url=' in url:
+        # === 1. 检测 Nexent 代理 URL 格式 ===
+        # 格式: http://localhost:5013/api/nb/v1/file/fetch?presigned_url=...
+        if 'presigned_url=' in url or '/api/nb/v1/file/fetch' in url:
             print(f"[MCP] 检测到 Nexent 代理 URL，正在提取真实的文件地址...")
-            # 从查询参数中提取 presigned_url
             parsed = urlparse(url)
             query_params = parse_qs(parsed.query)
             
@@ -510,51 +597,117 @@ def _download_file_from_url(url: str) -> Optional[str]:
                 print(f"[MCP] 提取到 presigned_url: {presigned_url[:200]}..." if len(presigned_url) > 200 else f"[MCP] 提取到 presigned_url: {presigned_url}")
                 download_url = presigned_url
             else:
-                print(f"[MCP] 警告: URL 中包含 presigned_url 参数但未找到")
+                print(f"[MCP] 警告: Nexent 代理 URL 中未找到 presigned_url 参数")
+                print(f"[MCP] 尝试直接访问代理 URL...")
+                download_url = url  # 回退到原始 URL
         
-        # 再次检查是否是 S3 URL
+        # === 2. 处理 S3 URL ===
         if download_url.startswith('s3://'):
-            print(f"[MCP] 警告: S3 URL 需要转换为 HTTP URL")
-            print(f"[MCP] 请提供 HTTP/HTTPS URL 而不是 S3 URL")
-            return None
+            print(f"[MCP] 检测到 S3 URL，尝试转换为 MinIO HTTP URL...")
+            # S3 URL 格式: s3://bucket/key
+            # 尝试转换为 MinIO HTTP URL: http://localhost:9000/bucket/key
+            s3_path = download_url[5:]  # 去掉 s3://
+            slash_idx = s3_path.find('/')
+            if slash_idx > 0:
+                bucket = s3_path[:slash_idx]
+                key = s3_path[slash_idx + 1:]
+                # 尝试多种 MinIO 地址
+                minio_hosts = [
+                    'localhost:9000',
+                    '127.0.0.1:9000',
+                    '192.168.2.1:9000',
+                    'host.docker.internal:9000',
+                ]
+                for host in minio_hosts:
+                    candidate = f"http://{host}/{bucket}/{key}"
+                    print(f"[MCP] 尝试 MinIO 地址: {candidate}")
+                    try:
+                        resp = requests.head(candidate, timeout=5)
+                        if resp.status_code < 500:
+                            download_url = candidate
+                            print(f"[MCP] MinIO 连接成功: {candidate}")
+                            break
+                    except Exception:
+                        continue
+                else:
+                    print(f"[MCP] 所有 MinIO 地址均无法连接")
+                    print(f"[MCP] 提示: 请确保 MinIO 服务在本地运行且端口 9000 可访问")
+                    # 最后使用 localhost 作为默认尝试
+                    download_url = f"http://localhost:9000/{bucket}/{key}"
+            else:
+                print(f"[MCP] 无效的 S3 URL 格式: {download_url}")
+                return None
         
-        elif download_url.startswith(('http://', 'https://')):
-            # HTTP/HTTPS URL - 直接下载
+        # === 3. Docker 内部地址替换 ===
+        if 'nexent-minio:9000' in download_url:
+            print(f"[MCP] 检测到 Docker 内部地址 nexent-minio:9000，尝试替换...")
+            # 按优先级尝试
+            replacements = [
+                ('nexent-minio:9000', 'localhost:9000'),
+                ('nexent-minio:9000', '127.0.0.1:9000'),
+                ('nexent-minio:9000', '192.168.2.1:9000'),
+                ('nexent-minio:9000', 'host.docker.internal:9000'),
+            ]
+            original_url = download_url
+            for old, new in replacements:
+                candidate = original_url.replace(old, new)
+                print(f"[MCP] 尝试: {candidate[:200]}..." if len(candidate) > 200 else f"[MCP] 尝试: {candidate}")
+                try:
+                    resp = requests.head(candidate, timeout=5)
+                    if resp.status_code < 500:
+                        download_url = candidate
+                        print(f"[MCP] 连接成功! 使用: {candidate[:150]}..." if len(candidate) > 150 else f"[MCP] 连接成功! 使用: {candidate}")
+                        break
+                except Exception:
+                    continue
+            else:
+                # 都没连上，使用 localhost:9000 作为默认值
+                print(f"[MCP] 所有替换均失败，使用默认 localhost:9000 尝试下载")
+                download_url = original_url.replace('nexent-minio:9000', 'localhost:9000')
+        
+        # === 4. 下载文件 ===
+        if download_url.startswith(('http://', 'https://')):
             print(f"[MCP] 正在下载: {download_url[:200]}..." if len(download_url) > 200 else f"[MCP] 正在下载: {download_url}")
             print(f"[MCP] 保存到: {temp_path}")
             
-            # 检查是否是 Docker 内部地址，需要转换为外部地址
-            original_url = download_url
-            if 'nexent-minio:9000' in download_url:
-                print(f"[MCP] 检测到 Docker 内部地址 nexent-minio:9000")
-                # TODO: 这里需要根据实际配置替换为正确的 MinIO 外部地址
-                # 常见的外部地址可能是 localhost:9000 或 192.168.2.1:9000
-                # 暂时尝试使用 localhost:9000
-                download_url = download_url.replace('nexent-minio:9000', 'localhost:9000')
-                print(f"[MCP] 已转换为外部地址: {download_url[:200]}..." if len(download_url) > 200 else f"[MCP] 已转换为外部地址: {download_url}")
+            # 尝试下载，带重试和多种地址回退
+            last_error = None
+            urls_to_try = [download_url]
             
-            try:
-                response = requests.get(download_url, timeout=60, stream=True)
-                response.raise_for_status()
-            except Exception as e:
-                print(f"[MCP] 下载失败: {str(e)}")
-                # 如果 localhost 失败，尝试其他可能的地址
-                if 'localhost:9000' in download_url and download_url != original_url:
-                    print(f"[MCP] 尝试使用 127.0.0.1:9000...")
-                    download_url = original_url.replace('nexent-minio:9000', '127.0.0.1:9000')
-                    response = requests.get(download_url, timeout=60, stream=True)
+            # 如果 URL 中包含 localhost，也尝试 127.0.0.1
+            if 'localhost' in download_url:
+                urls_to_try.append(download_url.replace('localhost', '127.0.0.1'))
+            
+            for try_url in urls_to_try:
+                try:
+                    response = requests.get(try_url, timeout=60, stream=True)
                     response.raise_for_status()
-                else:
-                    raise
+                    
+                    # 写入文件
+                    total_size = 0
+                    with open(temp_path, 'wb') as f:
+                        for chunk in response.iter_content(chunk_size=8192):
+                            if chunk:
+                                f.write(chunk)
+                                total_size += len(chunk)
+                    
+                    print(f"[MCP] 文件下载成功: {temp_path} ({total_size} 字节)")
+                    return str(temp_path)
+                except Exception as e:
+                    last_error = e
+                    print(f"[MCP] URL {try_url[:100]}... 下载失败: {str(e)}")
+                    continue
             
-            # 写入文件
-            with open(temp_path, 'wb') as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    if chunk:
-                        f.write(chunk)
+            # 所有尝试都失败
+            print(f"[MCP] 所有下载尝试均失败，最后错误: {last_error}")
             
-            print(f"[MCP] 文件下载成功: {temp_path}")
-            return str(temp_path)
+            # 提供诊断信息
+            print(f"[MCP] === 诊断信息 ===")
+            print(f"[MCP] 1. 确认文件服务器是否在运行")
+            print(f"[MCP] 2. 如果 Nexent 使用 Docker，确保 MinIO 端口已映射 (9000:9000)")
+            print(f"[MCP] 3. 如果 Nexent 是桌面应用，确保 MCP Server 和 Nexent 在同一网络")
+            print(f"[MCP] 4. 尝试在浏览器中直接访问该 URL 检查是否可以下载")
+            return None
         
         else:
             print(f"[MCP] 不支持的 URL 格式: {download_url}")
@@ -630,7 +783,7 @@ def _extract_text_from_file(file_path: str) -> str:
 
 def _save_paper_data(file_path: str, content: str, metadata: dict):
     """保存论文数据"""
-    paper_id = f"paper_{hash(file_path) % 10000:04d}"
+    paper_id = f"paper_{abs(hash(file_path)) % 10000:04d}"
     data = {
         "paper_id": paper_id,
         "content": content,
@@ -640,6 +793,7 @@ def _save_paper_data(file_path: str, content: str, metadata: dict):
         json.dumps(data, ensure_ascii=False, indent=2),
         encoding='utf-8'
     )
+    return paper_id
 
 
 def _load_paper_data(paper_id: str) -> Optional[dict]:
@@ -650,23 +804,28 @@ def _load_paper_data(paper_id: str) -> Optional[dict]:
     return None
 
 
-def _review_single_aspect(content: str, aspect: str) -> dict:
+def _review_single_aspect(content: str, aspect: str, max_score: int = 20) -> dict:
     """评审单个维度"""
+    score_ranges = [
+        (0.9, f"{int(max_score*0.9)}-{max_score}分: 优秀"),
+        (0.8, f"{int(max_score*0.8)}-{int(max_score*0.9)-1}分: 良好"),
+        (0.7, f"{int(max_score*0.7)}-{int(max_score*0.8)-1}分: 中等"),
+        (0.6, f"{int(max_score*0.6)}-{int(max_score*0.7)-1}分: 及格"),
+    ]
+    score_desc = "\n".join(f"- {desc}" for _, desc in score_ranges)
+    
     prompt = f"""
-请评审以下数学建模论文的"{aspect}"维度。
+请评审以下论文的"{aspect}"维度。
 
 评分标准：
-- 18-20分: 优秀
-- 15-17分: 良好
-- 12-14分: 中等
-- 9-11分: 及格
-- 0-8分: 不及格
+{score_desc}
+- 0-{int(max_score*0.6)-1}分: 不及格
 
 论文内容：
 {content[:2000]}
 
 请给出：
-1. 得分（0-20）
+1. 得分（0-{max_score}）
 2. 优势（至少2点）
 3. 改进建议（至少2点）
 
@@ -684,13 +843,14 @@ def _review_single_aspect(content: str, aspect: str) -> dict:
     
     # 解析结果
     score_match = re.search(r'得分[:：]\s*(\d+)', result)
-    score = int(score_match.group(1)) if score_match else 15
+    score = int(score_match.group(1)) if score_match else int(max_score * 0.75)
+    score = min(score, max_score)  # 确保不超过满分
     
     return {
         "aspect": aspect,
         "score": score,
-        "max_score": 20,
-        "score_rate": round(score / 20 * 100, 2),
+        "max_score": max_score,
+        "score_rate": round(score / max_score * 100, 2),
         "strengths": re.findall(r'\d+\.\s*(.+)', result.split('改进建议')[0])[:3],
         "suggestions": re.findall(r'\d+\.\s*(.+)', result.split('改进建议')[1])[:3] if '改进建议' in result else []
     }
@@ -747,7 +907,7 @@ if __name__ == "__main__":
     print("=" * 60)
     
     if not SILICONFLOW_API_KEY:
-        print("Warning: 未配置 SILICONFLOW_API_KEY，请在 .env 文件中设置")
+        print("⚠️ 警告: 未配置 SILICONFLOW_API_KEY，请在 .env 文件中设置")
     
     # 启动 FastMCP 服务器
     mcp.run(transport="sse", host="0.0.0.0", port=8004)
