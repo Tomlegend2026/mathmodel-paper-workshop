@@ -48,23 +48,23 @@
 
 ### 智能体配置界面
 
-![智能体基本信息配置](https://github.com/Tomlegend2026/mathmodel-paper-workshop/raw/main/nexent/%E6%88%AA%E5%9B%BE%202026-05-28%20114132.png)
+![智能体基本信息配置]
 
 ### 工具配置界面
 
-![工具列表配置](https://github.com/Tomlegend2026/mathmodel-paper-workshop/raw/main/nexent/%E6%88%AA%E5%9B%BE%202026-05-28%20114211.png)
+![工具列表配置]
 
 ### MCP 工具配置
 
-![MCP工具配置](https://github.com/Tomlegend2026/mathmodel-paper-workshop/raw/main/nexent/%E6%88%AA%E5%9B%BE%202026-05-28%20114240.png)
+![MCP工具配置]
 
 ### 评审流程展示
 
-![评审流程](https://github.com/Tomlegend2026/mathmodel-paper-workshop/raw/main/nexent/%E6%88%AA%E5%9B%BE%202026-05-28%20114250.png)
+![评审流程]
 
 ### 报告生成示例
 
-![报告生成](https://github.com/Tomlegend2026/mathmodel-paper-workshop/raw/main/nexent/%E6%88%AA%E5%9B%BE%202026-05-28%20114321.png)
+![报告生成]
 
 ---
 
@@ -100,7 +100,7 @@ python mcp_server.py
 
 ## 六、智能体配置文件
 
-[paper_review_assistant.json](https://github.com/Tomlegend2026/mathmodel-paper-workshop/raw/main/nexent/paper_review_assistant.json)
+[paper_review_assistant.json]
 
 ---
 
